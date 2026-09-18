@@ -1,0 +1,198 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>RISC-V 通过 APB 控制 FPGA LED｜流程图</title>
+<style>
+:root { color-scheme: light; --ink:#172c3f; --muted:#4d6275; --line:#cdd9e2; --blue:#205c92; --green:#22664a; --orange:#875216; }
+* { box-sizing:border-box; }
+body { margin:0; background:#eef3f6; color:var(--ink); font:16px/1.65 "Microsoft YaHei","PingFang SC",sans-serif; }
+main { max-width:1050px; margin:32px auto; padding:38px 44px; background:#fff; }
+.eyebrow { margin:0 0 6px; color:var(--blue); font-size:13px; letter-spacing:.08em; }
+h1 { margin:0 0 12px; font-size:29px; line-height:1.4; }
+.intro { margin:0 0 22px; color:var(--muted); }
+code { font-family:Consolas,"Microsoft YaHei",monospace; overflow-wrap:anywhere; }
+.chip { border:2px solid var(--line); border-radius:14px; padding:18px 20px 20px; }
+.boundary { display:flex; flex-wrap:wrap; align-items:baseline; gap:8px 20px; margin:0 0 16px; }
+.boundary strong { font-size:17px; }
+.boundary span { color:var(--muted); font-size:14px; }
+.row { display:grid; grid-template-columns:minmax(0,1.55fr) minmax(0,1fr); gap:22px; align-items:center; }
+.node { padding:13px 18px; border:1px solid #afc4d5; border-left:5px solid var(--blue); border-radius:8px; background:#f1f7fc; }
+.node.logic { background:#f1f8f4; border-color:#b8d2c4; border-left-color:var(--green); }
+.node.io { background:#fdf7ed; border-color:#ddcaad; border-left-color:var(--orange); }
+.node h2 { margin:0 0 5px; font-size:18px; line-height:1.5; }
+.node p { margin:2px 0; font-size:15px; }
+.node .mono { font-family:Consolas,"Microsoft YaHei",monospace; font-size:15px; }
+.annotation { color:var(--muted); font-size:14px; }
+.annotation p { margin:4px 0; }
+.annotation strong { color:var(--ink); }
+.connector { width:60%; height:30px; display:flex; justify-content:center; align-items:center; color:#607c91; font-size:24px; line-height:1; }
+.outside { padding:0 22px; }
+.legend { color:var(--muted); font-size:14px; margin:12px 0 0; }
+.timing { margin:26px 0 22px; }
+.timing h2 { margin:0 0 10px; font-size:18px; }
+.time-grid { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); border:1px solid var(--line); }
+.time { padding:10px 8px; text-align:center; font-size:14px; background:#f1f7fc; }
+.time:nth-child(even) { background:#f3f6f8; }
+.time + .time { border-left:1px solid var(--line); }
+.time strong { display:block; font-size:17px; }
+.caption { color:var(--muted); font-size:14px; margin:8px 0 0; }
+.details-title { margin:28px 0 10px; font-size:18px; }
+details { border-top:1px solid var(--line); padding:12px 0; }
+summary { cursor:pointer; font-weight:600; }
+details p { margin:10px 0; }
+pre { white-space:pre-wrap; overflow-wrap:anywhere; padding:14px 18px; background:#f3f6f8; font-size:14px; line-height:1.65; }
+table { width:100%; border-collapse:collapse; font-size:14px; margin-top:10px; }
+td,th { text-align:left; padding:9px 10px; border-bottom:1px solid var(--line); vertical-align:top; overflow-wrap:anywhere; }
+th { background:#f4f7f9; }
+a { color:var(--blue); text-underline-offset:3px; }
+footer { border-top:1px solid var(--line); margin-top:20px; padding-top:12px; color:var(--muted); font-size:12px; }
+@media (max-width:680px) {
+ main { margin:0; padding:23px 15px; } h1 { font-size:23px; }
+ .chip { padding:14px 12px; } .row { grid-template-columns:1fr; gap:7px; }
+ .annotation { padding:0 8px; } .connector { width:100%; height:28px; }
+ .outside { padding:0 14px; } .node { padding:12px; } .node h2 { font-size:17px; }
+ .time { padding:8px 3px; font-size:12px; } .time strong { font-size:15px; }
+ td,th { padding:8px 5px; }
+}
+@media print {
+ @page { size:A4 portrait; margin:12mm; }
+ body { background:#fff; font-size:12px; } main { margin:0; padding:0; max-width:none; }
+ h1 { font-size:23px; } .intro { margin-bottom:14px; font-size:12px; }
+ .chip { padding:12px 14px; } .node { padding:8px 12px; } .node h2 { font-size:14px; }
+ .node p,.node .mono,.annotation,.boundary span,.legend,.caption { font-size:11px; }
+ .connector { height:22px; font-size:20px; } .timing { margin:16px 0 12px; }
+ .timing h2 { font-size:14px; } .time { padding:5px; font-size:11px; } .time strong { font-size:13px; }
+ .details-title,details { display:none; } footer { margin-top:12px; font-size:10px; }
+ .row { break-inside:avoid; } * { print-color-adjust:exact; -webkit-print-color-adjust:exact; }
+}
+</style>
+</head>
+<body>
+<main>
+<p class="eyebrow">HARDJTAG_DEMO · 团队学习流程图 · 2026-09-18</p>
+<h1>CPU 写入的一个数，如何让 LED 闪烁？</h1>
+<p class="intro">沿箭头从上往下读。每个框是一段处理过程；右侧解释它为什么存在。此实验已由使用者上板确认 LED 能闪烁。</p>
+
+<section aria-label="从软件写入到LED输出的流程图">
+ <div class="chip">
+  <div class="boundary"><strong>同一片 FPGA 内部</strong><span>RISC-V 软核运行 C 程序；APB 外设由 Verilog 描述。</span></div>
+  <div class="row">
+   <div class="node"><h2>① C 程序：发出写请求</h2><p class="mono">write_u32(1, APB0 + 0);</p><p>地址 = 0xF8100000，写入值 = 1</p></div>
+   <div class="annotation"><p><strong>CPU 决定“写到哪、写什么”。</strong></p><p>程序稍后写入 0，再写 1，如此循环。</p></div>
+  </div>
+  <div class="connector" aria-hidden="true">↓</div>
+  <div class="row">
+   <div class="node"><h2>② SoC：按地址找到 APB0</h2><p>地址译码器选择这个外设窗口</p><p>总线桥把 CPU 请求转换成 APB 操作</p></div>
+   <div class="annotation"><p><strong>地址分配在硬件中已配置。</strong></p><p><code>soc.h</code> 的宏只是把这个地址告诉 C 程序，不会创建硬件。</p></div>
+  </div>
+  <div class="connector" aria-hidden="true">↓</div>
+  <div class="row">
+   <div class="node"><h2>③ APB：把地址和数据送过去</h2><p>本次访问：局部偏移 PADDR = 0</p><p>写入值的最低位 PWDATA[0] = 1</p></div>
+   <div class="annotation"><p><strong>APB 是接口协议，不是存储器。</strong></p><p>先准备，再进入访问阶段；双方完成握手后，外设接收这次写入。</p></div>
+  </div>
+  <div class="connector" aria-hidden="true">↓</div>
+  <div class="row">
+   <div class="node logic"><h2>④ apb3_top：保存这个控制位</h2><p>偏移为 0，且写握手完成时，在时钟沿：</p><p class="mono">_zz_sig &lt;= apb_pwdata[0];</p><p class="mono">assign sig = _zz_sig;</p></div>
+   <div class="annotation"><p><strong><code>_zz_sig</code> 是 1 位寄存器。</strong></p><p>保存最近写入的值，直到下次有效写入。</p><p><strong><code>sig</code> 是线</strong>，把保存值送往下一段。</p></div>
+  </div>
+  <div class="connector" aria-hidden="true">↓</div>
+  <div class="row">
+   <div class="node io"><h2>⑤ 顶层连线：把 sig 交给 LED 引脚</h2><p class="mono">soc_gpio_OUT[1] = sig</p><p class="mono">soc_gpio_OE[1] = 1</p></div>
+   <div class="annotation"><p><strong>OUT 决定输出高还是低。</strong></p><p><strong>OE=1 允许引脚输出</strong>，不等于灯亮。</p><p>此通道的控制者已从 SoC GPIO 改成 <code>sig</code>。</p></div>
+  </div>
+ </div>
+ <div class="outside">
+  <div class="connector" aria-hidden="true">↓</div>
+  <div class="row">
+   <div class="node io"><h2>⑥ 板上电路：LED 响应引脚电平</h2><p>soc_gpio[1] → GPIOR_24 → LED</p><p>引脚电平随着 sig 的 0 / 1 变化</p></div>
+   <div class="annotation"><p><strong>管脚配置：inout，3.3 V LVCMOS。</strong></p><p>OE 已固定为 1，因此作为输出使用。</p><p>高电平亮还是低电平亮，取决于板上接法。</p></div>
+  </div>
+ </div>
+ <p class="legend">蓝色：软件与总线传输　绿色：自定义寄存器　浅橙色：引脚与 LED</p>
+</section>
+
+<section class="timing" aria-label="100毫秒切换的时间关系">
+ <h2>为什么会闪烁？软件每约 100 ms 改写一次</h2>
+ <div class="time-grid">
+  <div class="time">0–100 ms<strong>sig = 1</strong>引脚高电平</div>
+  <div class="time">100–200 ms<strong>sig = 0</strong>引脚低电平</div>
+  <div class="time">200–300 ms<strong>sig = 1</strong>引脚高电平</div>
+  <div class="time">300–400 ms<strong>sig = 0</strong>引脚低电平</div>
+ </div>
+ <p class="caption">调用 <code>bsp_uDelay(100000)</code> 阻塞约 100 ms；此时 CPU 忙等，寄存器仍保持输出。完整亮灭周期约 200 ms（5 Hz）。上图时间为相对时间，忽略少量执行开销。</p>
+</section>
+
+<h2 class="details-title">需要复习时，再展开下面的说明</h2>
+<details>
+ <summary>1. 软件到底写了什么？</summary>
+ <p><code>write_u32(数据, 地址)</code> 的第一个参数是数据，第二个是地址。<code>APB0</code> 等于 <code>0xF8100000</code>；<code>EXAMPLE_APB3_SLV_REG0_OFFSET</code> 等于 0。</p>
+ <pre><code>while (1) {
+    write_u32(1, APB0 + EXAMPLE_APB3_SLV_REG0_OFFSET);
+    bsp_uDelay(100000);  // 100000 微秒 = 100 毫秒
+
+    write_u32(0, APB0 + EXAMPLE_APB3_SLV_REG0_OFFSET);
+    bsp_uDelay(100000);
+}</code></pre>
+ <p>这段程序写的是自定义 APB 外设。LED 的输出使能已在硬件中固定，因此这里不需要调用 SoC GPIO 初始化函数。<code>bsp_uDelay()</code> 使用 CLINT 计时器做忙等，延迟期间 CPU 不去执行其他应用逻辑。</p>
+</details>
+<details>
+ <summary>2. APB 怎样完成一次写入？</summary>
+ <p>APB 主端在 SoC 中，自定义模块 <code>apb3_top</code> 是从端。地址和数据由主端给出，<code>PREADY</code> 由从端返回。</p>
+ <table>
+  <thead><tr><th>阶段</th><th>主端</th><th>从端</th></tr></thead>
+  <tbody>
+   <tr><td>准备</td><td>PSEL=1，PENABLE=0；给出地址、数据，PWRITE=1</td><td>等待访问阶段</td></tr>
+   <tr><td>访问</td><td>PSEL=1，PENABLE=1；保持地址和数据</td><td>PREADY=1 时，在该时钟上升沿完成传输</td></tr>
+   <tr><td>需要等待时</td><td>维持访问阶段</td><td>PREADY=0，暂不完成传输；本例固定 PREADY=1</td></tr>
+  </tbody>
+ </table>
+ <pre><code>factory_doWrite = PSEL &amp;&amp; PENABLE &amp;&amp; PREADY &amp;&amp; PWRITE;
+// 只有偏移为 0 且 factory_doWrite 成立，寄存器才接收数据。</code></pre>
+ <p>每次 APB 传输处理一个地址处的一次读或写，没有 AXI 式突发传输。本例只使用写入数据的最低位。</p>
+</details>
+<details>
+ <summary>3. sig、OUT、OE 分别负责什么？</summary>
+ <table>
+  <thead><tr><th>名称</th><th>含义</th></tr></thead>
+  <tbody>
+   <tr><td><code>_zz_sig</code></td><td>1 位寄存器，记住软件最近一次写入的 bit0。</td></tr>
+   <tr><td><code>sig</code></td><td>内部信号线，连续传递寄存器的值。</td></tr>
+   <tr><td><code>soc_gpio_OUT[1]</code></td><td>送给第 1 号 GPIO（从 0 编号）的输出数据，已改接 sig。</td></tr>
+   <tr><td><code>soc_gpio_OE[1]</code></td><td>引脚输出缓冲器的开关。1：驱动高/低电平；0：停止驱动，呈高阻态。</td></tr>
+  </tbody>
+ </table>
+ <p>FPGA 的输入、输出和输出使能最终汇合到同一个物理引脚。引脚名称仍叫 <code>soc_gpio[1]</code>，不代表它必须由 SoC 内置 GPIO 控制。</p>
+ <pre><code>// 顶层实际代码：右侧从左到右对应 [3]、[2]、[1]、[0]
+assign soc_gpio_OUT = {soc_gpio_out_cpu[3:2], sig,  soc_gpio_out_cpu[0]};
+assign soc_gpio_OE  = {soc_gpio_oe_cpu[3:2],  1'b1, soc_gpio_oe_cpu[0]};</code></pre>
+ <p>GPIO0、GPIO2、GPIO3 仍保持原来的控制方式。GPIO1 只由 sig 驱动，避免多个输出源争用。</p>
+</details>
+<details>
+ <summary>4. 队友接手时，去哪里找代码？</summary>
+ <p>以下位置都在原开发板工程 <code>09_Ti60F225_hardjtag_demo</code> 中。本学习仓库仅收录讲解资料；表格帮助持有原工程的队友定位代码。</p>
+ <table>
+  <thead><tr><th>查看对象</th><th>文件 / 搜索关键字</th></tr></thead>
+  <tbody>
+   <tr><td>C 闪烁程序</td><td><code>apb3Demo/src/main.c</code><br>搜索 <code>toggle every 100 ms</code></td></tr>
+   <tr><td>LED 顶层连线</td><td><code>rtl/ddr3_example_top.v</code><br>搜索 <code>assign soc_gpio_OUT</code></td></tr>
+   <tr><td>APB 外设逻辑</td><td><code>par/ddr_demo_ti60/src/Interrupt.v</code><br>模块名 <code>apb3_top</code>，寄存器 <code>_zz_sig</code></td></tr>
+   <tr><td>软件地址定义</td><td><code>BSP 的 soc.h</code><br>搜索 <code>IO_APB_SLAVE_0_INPUT</code></td></tr>
+   <tr><td>阻塞延迟入口</td><td><code>BSP 的 bsp.h</code><br>搜索 <code>bsp_uDelay</code></td></tr>
+   <tr><td>管脚和电气标准</td><td><code>ddr_demo_ti60.peri.xml</code><br>搜索 <code>soc_gpio[1]</code>（GPIOR_24）</td></tr>
+  </tbody>
+ </table>
+ <p>硬件连线改变后，需要重新生成并下载 FPGA bitstream；C 程序改变后，需要重新编译并下载运行软件。</p>
+</details>
+<details>
+ <summary>5. 这次成功验证了什么？还有什么没有验证？</summary>
+ <p>已观察到 LED 闪烁，说明本例“软件写偏移 0 的 bit0 → 自定义寄存器 → 引脚输出”的控制通路能够工作。它为以后配置加速器提供了最小示例。</p>
+ <p>当前 <code>Interrupt.v</code> 的读数据固定为 0，因此没有寄存器读回验证；它也没有使用 reset 输入给 <code>_zz_sig</code> 赋初值，图中的保存关系从第一次有效写入后开始。</p>
+ <p>源码核对还发现：顶层 <code>apb_paddr</code>、<code>apb_pwdata</code>、<code>apb_prdata</code> 缺少显式位宽声明。在允许隐式线网的 Verilog 设置下会成为 1 位线，导致多位数据或地址截断；本例只写偏移 0 的 bit0，不能覆盖这个问题。扩展多寄存器前，需要单独补齐位宽并验证。生成的 SoC 地址端口为 16 位、读写数据为 32 位，外设地址端口目前为 32 位，应明确做零扩展连接。</p>
+ <p>本页仅记录现状，没有修改 RTL、C 程序或生成文件。LED 有效电平未在此认定：高电平不必然代表点亮。</p>
+</details>
+<footer>依据 hardjtag_demo 本地源码整理。灯的上板现象由使用者确认。此页可离线打开并转发；浏览器打印时仅保留主流程和闪烁时间关系。</footer>
+</main>
+</body>
+</html>

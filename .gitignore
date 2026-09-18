@@ -1,0 +1,16 @@
+# Keep private environment data and build outputs out of the learning repository.
+.env
+.env.*
+*.pem
+*.key
+*.token
+.DS_Store
+Thumbs.db
+node_modules/
+__pycache__/
+build/
+outflow/
+work_*/
+*.bit
+*.elf
+*.o
