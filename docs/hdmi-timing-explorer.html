@@ -1,0 +1,243 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>HDMI 1080p 时序交互讲解</title>
+  <style>
+    :root {
+      color-scheme: light dark;
+      --bg: light-dark(#f5f7fb, #111827);
+      --panel: light-dark(#ffffff, #1f2937);
+      --text: light-dark(#172033, #f3f4f6);
+      --muted: light-dark(#5f6b7e, #aeb8c7);
+      --border: light-dark(#d8dee9, #3c485a);
+      --active: light-dark(#dbeafe, #17345f);
+      --front: light-dark(#fef3c7, #594415);
+      --sync: light-dark(#fecaca, #662222);
+      --back: light-dark(#e7e5e4, #3e3b39);
+      --blue: #2563eb;
+      --red: #dc2626;
+      --green: #16a34a;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: system-ui, -apple-system, "Segoe UI", "Microsoft YaHei", sans-serif;
+      line-height: 1.55;
+    }
+    main { max-width: 1100px; margin: 0 auto; padding: 28px 20px 48px; }
+    h1 { margin: 0 0 8px; font-size: clamp(24px, 4vw, 36px); }
+    h2 { margin: 0 0 14px; font-size: 20px; }
+    p { margin: 6px 0; }
+    code, pre { font-family: ui-monospace, SFMono-Regular, Consolas, monospace; }
+    code { color: light-dark(#7c2d12, #fdba74); }
+    .lead { color: var(--muted); margin-bottom: 22px; }
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 20px;
+      margin-top: 18px;
+      box-shadow: 0 8px 24px light-dark(#17203310, #00000030);
+    }
+    .controls { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+    label { display: block; font-weight: 650; }
+    input[type="range"] { width: 100%; margin-top: 8px; }
+    .value { font-variant-numeric: tabular-nums; color: var(--blue); }
+    .buttons { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 15px; }
+    button {
+      border: 1px solid var(--border);
+      background: var(--panel);
+      color: var(--text);
+      border-radius: 8px;
+      padding: 9px 14px;
+      font: inherit;
+      cursor: pointer;
+    }
+    button:hover { border-color: var(--blue); }
+    .status { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; }
+    .stat { border: 1px solid var(--border); border-radius: 10px; padding: 12px; }
+    .stat small { display: block; color: var(--muted); }
+    .stat strong { display: block; margin-top: 4px; font-size: 20px; }
+    .on { color: var(--green); }
+    .off { color: var(--muted); }
+    .track-wrap { margin: 20px 0 8px; }
+    .track-label { display: flex; justify-content: space-between; margin-bottom: 7px; }
+    .track { position: relative; display: flex; height: 62px; border-radius: 9px; overflow: hidden; }
+    .region { display: flex; align-items: center; justify-content: center; text-align: center; color: light-dark(#172033, #f3f4f6); min-width: 32px; }
+    .active { background: var(--active); }
+    .front { background: var(--front); }
+    .sync { background: var(--sync); }
+    .back { background: var(--back); }
+    .marker { position: absolute; top: 0; bottom: 0; width: 3px; background: var(--blue); transform: translateX(-1px); }
+    .marker::before { content: ""; position: absolute; top: 0; left: -5px; border-left: 6px solid transparent; border-right: 6px solid transparent; border-top: 9px solid var(--blue); }
+    .signal-row { display: grid; grid-template-columns: 70px 1fr; align-items: center; margin-top: 10px; }
+    .signal-line { height: 12px; border-radius: 6px; background: var(--border); overflow: hidden; }
+    .signal-fill { height: 100%; width: 0; transition: width .1s; }
+    .signal-fill.on-de { width: 100%; background: var(--blue); }
+    .signal-fill.on-sync { width: 100%; background: var(--red); }
+    .explain { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+    pre { margin: 0; padding: 16px; border-radius: 10px; background: light-dark(#111827, #0b1020); color: #e5e7eb; overflow-x: auto; }
+    .decision { border-left: 4px solid var(--blue); padding-left: 14px; }
+    .muted { color: var(--muted); }
+    @media (max-width: 760px) {
+      .controls, .explain { grid-template-columns: 1fr; }
+      .status { grid-template-columns: repeat(2, 1fr); }
+      .region { font-size: 12px; }
+    }
+  </style>
+</head>
+<body>
+<main>
+  <h1>HDMI 1080p 时序交互讲解</h1>
+  <p class="lead">拖动计数器，观察同一个 Verilog 文件如何根据当前位置生成 <code>DE</code>、<code>HS</code> 和 <code>VS</code>。</p>
+
+  <section class="panel">
+    <h2>1. 选择当前像素周期</h2>
+    <div class="controls">
+      <label>h_count = <span id="hValue" class="value">0</span>
+        <input id="hRange" type="range" min="0" max="2199" value="0">
+      </label>
+      <label>v_count = <span id="vValue" class="value">0</span>
+        <input id="vRange" type="range" min="0" max="1124" value="0">
+      </label>
+    </div>
+    <div class="buttons">
+      <button id="stepPixel" type="button">前进1个像素</button>
+      <button id="stepLine" type="button">前进1行</button>
+      <button id="nextHBoundary" type="button">下一个横向边界</button>
+      <button id="nextVBoundary" type="button">下一个纵向边界</button>
+      <button id="reset" type="button">回到(0,0)</button>
+    </div>
+  </section>
+
+  <section class="panel">
+    <h2>2. 当前硬件输出</h2>
+    <div class="status" aria-live="polite">
+      <div class="stat"><small>坐标</small><strong id="coordinate">(0, 0)</strong></div>
+      <div class="stat"><small>横向区域</small><strong id="hRegion">Active</strong></div>
+      <div class="stat"><small>纵向区域</small><strong id="vRegion">Active</strong></div>
+      <div class="stat"><small>DE</small><strong id="deValue" class="on">1</strong></div>
+      <div class="stat"><small>HS / VS</small><strong id="syncValue">0 / 0</strong></div>
+    </div>
+
+    <div class="track-wrap">
+      <div class="track-label"><strong>横向一行：2200周期</strong><span id="hCaption" class="muted"></span></div>
+      <div class="track" aria-label="横向时序">
+        <div class="region active" style="width:87.273%">Active<br>1920</div>
+        <div class="region front" style="width:4%">Front<br>88</div>
+        <div class="region sync" style="width:2%">HS<br>44</div>
+        <div class="region back" style="width:6.727%">Back<br>148</div>
+        <div id="hMarker" class="marker"></div>
+      </div>
+      <div class="signal-row"><span>DE</span><div class="signal-line"><div id="deBar" class="signal-fill"></div></div></div>
+      <div class="signal-row"><span>HS</span><div class="signal-line"><div id="hsBar" class="signal-fill"></div></div></div>
+    </div>
+
+    <div class="track-wrap">
+      <div class="track-label"><strong>纵向一帧：1125行</strong><span id="vCaption" class="muted"></span></div>
+      <div class="track" aria-label="纵向时序">
+        <div class="region active" style="width:96%">Active 1080行</div>
+        <div class="region front" style="width:0.356%"></div>
+        <div class="region sync" style="width:0.444%">VS</div>
+        <div class="region back" style="width:3.2%">Back</div>
+        <div id="vMarker" class="marker"></div>
+      </div>
+      <div class="signal-row"><span>VS</span><div class="signal-line"><div id="vsBar" class="signal-fill"></div></div></div>
+    </div>
+  </section>
+
+  <section class="panel explain">
+    <div>
+      <h2>3. 对应的Verilog判断</h2>
+      <pre><code>assign data_enable =
+  (h_count &lt; 1920) &amp;&amp; (v_count &lt; 1080);
+
+assign hsync =
+  (h_count &gt;= 2008) &amp;&amp; (h_count &lt; 2052);
+
+assign vsync =
+  (v_count &gt;= 1084) &amp;&amp; (v_count &lt; 1089);</code></pre>
+    </div>
+    <div>
+      <h2>4. 当前判断过程</h2>
+      <div id="decision" class="decision"></div>
+      <p class="muted">注意：<code>pixel_x/pixel_y</code>一直输出计数器，但只有<code>DE=1</code>时，它们才表示可见图像坐标。</p>
+    </div>
+  </section>
+</main>
+
+<script>
+  const H_TOTAL = 2200, V_TOTAL = 1125;
+  const hRange = document.getElementById('hRange');
+  const vRange = document.getElementById('vRange');
+
+  function regionH(h) {
+    if (h < 1920) return 'Active';
+    if (h < 2008) return 'Front porch';
+    if (h < 2052) return 'Sync';
+    return 'Back porch';
+  }
+  function regionV(v) {
+    if (v < 1080) return 'Active';
+    if (v < 1084) return 'Front porch';
+    if (v < 1089) return 'Sync';
+    return 'Back porch';
+  }
+  function render() {
+    const h = Number(hRange.value), v = Number(vRange.value);
+    const de = h < 1920 && v < 1080;
+    const hs = h >= 2008 && h < 2052;
+    const vs = v >= 1084 && v < 1089;
+    document.getElementById('hValue').textContent = h;
+    document.getElementById('vValue').textContent = v;
+    document.getElementById('coordinate').textContent = `(${h}, ${v})`;
+    document.getElementById('hRegion').textContent = regionH(h);
+    document.getElementById('vRegion').textContent = regionV(v);
+    const deValue = document.getElementById('deValue');
+    deValue.textContent = de ? '1' : '0';
+    deValue.className = de ? 'on' : 'off';
+    document.getElementById('syncValue').textContent = `${hs ? 1 : 0} / ${vs ? 1 : 0}`;
+    document.getElementById('hMarker').style.left = `${h / (H_TOTAL - 1) * 100}%`;
+    document.getElementById('vMarker').style.left = `${v / (V_TOTAL - 1) * 100}%`;
+    document.getElementById('deBar').className = `signal-fill ${de ? 'on-de' : ''}`;
+    document.getElementById('hsBar').className = `signal-fill ${hs ? 'on-sync' : ''}`;
+    document.getElementById('vsBar').className = `signal-fill ${vs ? 'on-sync' : ''}`;
+    document.getElementById('hCaption').textContent = `h_count=${h}，${regionH(h)}`;
+    document.getElementById('vCaption').textContent = `v_count=${v}，${regionV(v)}`;
+    document.getElementById('decision').innerHTML = `
+      <p><code>${h} &lt; 1920</code> 为 <strong>${h < 1920}</strong>，<code>${v} &lt; 1080</code> 为 <strong>${v < 1080}</strong>，所以 <strong>DE=${de ? 1 : 0}</strong>。</p>
+      <p><code>2008 ≤ ${h} &lt; 2052</code> 为 <strong>${hs}</strong>，所以 <strong>HS=${hs ? 1 : 0}</strong>。</p>
+      <p><code>1084 ≤ ${v} &lt; 1089</code> 为 <strong>${vs}</strong>，所以 <strong>VS=${vs ? 1 : 0}</strong>。</p>`;
+  }
+  function stepPixel() {
+    let h = Number(hRange.value), v = Number(vRange.value);
+    h++;
+    if (h === H_TOTAL) { h = 0; v = (v + 1) % V_TOTAL; }
+    hRange.value = h; vRange.value = v; render();
+  }
+  function nextBoundary(value, boundaries) {
+    return boundaries.find(v => v > value) ?? 0;
+  }
+  hRange.addEventListener('input', render);
+  vRange.addEventListener('input', render);
+  document.getElementById('stepPixel').addEventListener('click', stepPixel);
+  document.getElementById('stepLine').addEventListener('click', () => {
+    hRange.value = 0; vRange.value = (Number(vRange.value) + 1) % V_TOTAL; render();
+  });
+  document.getElementById('nextHBoundary').addEventListener('click', () => {
+    hRange.value = nextBoundary(Number(hRange.value), [1920, 2008, 2052, 2199]); render();
+  });
+  document.getElementById('nextVBoundary').addEventListener('click', () => {
+    vRange.value = nextBoundary(Number(vRange.value), [1080, 1084, 1089, 1124]); render();
+  });
+  document.getElementById('reset').addEventListener('click', () => {
+    hRange.value = 0; vRange.value = 0; render();
+  });
+  render();
+</script>
+</body>
+</html>

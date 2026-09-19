@@ -1,0 +1,67 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1100" height="570" viewBox="0 0 1100 570" role="img" aria-labelledby="title desc">
+  <title id="title">HDMI 1920 by 1080 progressive timing</title>
+  <desc id="desc">Horizontal and vertical timing regions showing active video, front porch, synchronization pulse, back porch, data enable, horizontal sync and vertical sync.</desc>
+  <rect width="1100" height="570" fill="#ffffff"/>
+  <style>
+    text { font-family: Arial, 'Microsoft YaHei', sans-serif; fill: #172033; }
+    .title { font-size: 24px; font-weight: 600; }
+    .head { font-size: 18px; font-weight: 600; }
+    .label { font-size: 15px; }
+    .small { font-size: 13px; fill: #526078; }
+    .axis { stroke: #526078; stroke-width: 2; }
+    .guide { stroke: #a9b2c2; stroke-width: 1; stroke-dasharray: 4 4; }
+  </style>
+
+  <text x="40" y="40" class="title">1920×1080p 视频时序：有效区 + 消隐区 = 完整一行/一帧</text>
+
+  <text x="40" y="85" class="head">横向：一行共 2200 个像素周期</text>
+  <text x="40" y="138" class="label">区域</text>
+  <rect x="140" y="105" width="610" height="52" fill="#dceafe"/>
+  <rect x="750" y="105" width="62" height="52" fill="#fde8bd"/>
+  <rect x="812" y="105" width="50" height="52" fill="#fecaca"/>
+  <rect x="862" y="105" width="168" height="52" fill="#e7e5e4"/>
+  <text x="445" y="136" text-anchor="middle" class="label">Active 1920</text>
+  <text x="781" y="128" text-anchor="middle" class="small">Front</text>
+  <text x="781" y="146" text-anchor="middle" class="small">88</text>
+  <text x="837" y="128" text-anchor="middle" class="small">Sync</text>
+  <text x="837" y="146" text-anchor="middle" class="small">44</text>
+  <text x="946" y="136" text-anchor="middle" class="label">Back 148</text>
+  <line x1="140" y1="174" x2="1030" y2="174" class="axis"/>
+  <text x="140" y="194" text-anchor="middle" class="small">0</text>
+  <text x="750" y="194" text-anchor="middle" class="small">1920</text>
+  <text x="812" y="194" text-anchor="middle" class="small">2008</text>
+  <text x="862" y="194" text-anchor="middle" class="small">2052</text>
+  <text x="1030" y="194" text-anchor="end" class="small">2200</text>
+
+  <text x="40" y="235" class="label">DE</text>
+  <path d="M140 260 L140 220 L750 220 L750 260 L1030 260" fill="none" stroke="#2563eb" stroke-width="4"/>
+  <text x="445" y="246" text-anchor="middle" class="small">RGB有效</text>
+  <text x="40" y="305" class="label">HS</text>
+  <path d="M140 330 L812 330 L812 290 L862 290 L862 330 L1030 330" fill="none" stroke="#dc2626" stroke-width="4"/>
+
+  <line x1="750" y1="98" x2="750" y2="340" class="guide"/>
+  <line x1="812" y1="98" x2="812" y2="340" class="guide"/>
+  <line x1="862" y1="98" x2="862" y2="340" class="guide"/>
+
+  <text x="40" y="390" class="head">纵向：一帧共 1125 行</text>
+  <text x="40" y="443" class="label">区域</text>
+  <rect x="140" y="410" width="610" height="52" fill="#dcfce7"/>
+  <rect x="750" y="410" width="44" height="52" fill="#fde8bd"/>
+  <rect x="794" y="410" width="50" height="52" fill="#fecaca"/>
+  <rect x="844" y="410" width="186" height="52" fill="#e7e5e4"/>
+  <text x="445" y="441" text-anchor="middle" class="label">Active 1080 lines</text>
+  <text x="772" y="433" text-anchor="middle" class="small">Front</text>
+  <text x="772" y="451" text-anchor="middle" class="small">4</text>
+  <text x="819" y="433" text-anchor="middle" class="small">VS</text>
+  <text x="819" y="451" text-anchor="middle" class="small">5</text>
+  <text x="937" y="441" text-anchor="middle" class="label">Back 36</text>
+  <line x1="140" y1="480" x2="1030" y2="480" class="axis"/>
+  <text x="140" y="500" text-anchor="middle" class="small">0</text>
+  <text x="750" y="500" text-anchor="middle" class="small">1080</text>
+  <text x="794" y="500" text-anchor="middle" class="small">1084</text>
+  <text x="844" y="500" text-anchor="middle" class="small">1089</text>
+  <text x="1030" y="500" text-anchor="end" class="small">1125</text>
+
+  <text x="40" y="535" class="label">VS</text>
+  <path d="M140 555 L794 555 L794 515 L844 515 L844 555 L1030 555" fill="none" stroke="#dc2626" stroke-width="4"/>
+</svg>
