@@ -44,7 +44,11 @@ module tb_hdmi_timing_1080p;
 
   initial begin
     repeat (3) @(negedge pixel_clk);
+    if (pixel_x !== 0 || pixel_y !== 0 ||
+        data_enable !== 0 || hsync !== 0 || vsync !== 0)
+      $fatal(1, "outputs must be inactive and counters zero during reset");
     reset_n = 1'b1;
+    #0.001; // Allow continuous assignments one delta/time step to settle.
 
     active_pixels = 0;
     hsync_pixels = 0;
@@ -112,6 +116,15 @@ module tb_hdmi_timing_1080p;
     $display("      active pixels = %0d", active_pixels);
     $display("      HS = %0d clocks per line, VS = %0d lines per frame",
              H_SYNC, V_SYNC);
+
+    // Prove that reset acts immediately, even between pixel-clock edges.
+    repeat (1234) @(negedge pixel_clk);
+    #1 reset_n = 1'b0;
+    #1;
+    if (pixel_x !== 0 || pixel_y !== 0 ||
+        data_enable !== 0 || hsync !== 0 || vsync !== 0)
+      $fatal(1, "asynchronous reset did not immediately clear timing state");
+    $display("PASS: asynchronous reset immediately clears counters and outputs");
     $finish;
   end
 

@@ -49,14 +49,17 @@ module hdmi_timing_1080p #(
   end
 
   // Pixels are meaningful only while both counters are inside the active area.
-  assign data_enable = (h_count < H_ACTIVE) && (v_count < V_ACTIVE);
+  assign data_enable = reset_n &&
+                       (h_count < H_ACTIVE) && (v_count < V_ACTIVE);
 
   // 1080p uses positive-polarity synchronization pulses. The pulse begins
   // after the active region and front porch, then lasts H_SYNC/V_SYNC periods.
-  assign hsync = (h_count >= H_ACTIVE + H_FRONT) &&
+  assign hsync = reset_n &&
+                 (h_count >= H_ACTIVE + H_FRONT) &&
                  (h_count <  H_ACTIVE + H_FRONT + H_SYNC);
 
-  assign vsync = (v_count >= V_ACTIVE + V_FRONT) &&
+  assign vsync = reset_n &&
+                 (v_count >= V_ACTIVE + V_FRONT) &&
                  (v_count <  V_ACTIVE + V_FRONT + V_SYNC);
 
   // Coordinates are valid only while data_enable is high.

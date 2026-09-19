@@ -153,13 +153,13 @@
   <section class="panel explain">
     <div>
       <h2>3. 对应的Verilog判断</h2>
-      <pre><code>assign data_enable =
+      <pre><code>assign data_enable = reset_n &amp;&amp;
   (h_count &lt; 1920) &amp;&amp; (v_count &lt; 1080);
 
-assign hsync =
+assign hsync = reset_n &amp;&amp;
   (h_count &gt;= 2008) &amp;&amp; (h_count &lt; 2052);
 
-assign vsync =
+assign vsync = reset_n &amp;&amp;
   (v_count &gt;= 1084) &amp;&amp; (v_count &lt; 1089);</code></pre>
     </div>
     <div>
