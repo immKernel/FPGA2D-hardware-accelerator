@@ -50,7 +50,7 @@ gtkwave hdmi_timing_small.vcd sim/hdmi_timing_small.gtkw
 
 布局文件会自动加入`pixel_clk`、`reset_n`、`pixel_x`、`pixel_y`、`data_enable`、`hsync`和`vsync`。
 
-完整中文原理说明见[第02课](../../docs/02-hdmi-video-timing.md)。
+完整中文原理说明见[第03课](../../docs/03-hdmi-video-timing.md)。
 
 ## Efinity综合检查
 

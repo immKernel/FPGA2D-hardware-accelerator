@@ -1,4 +1,4 @@
-# 第 02 课：从一个 Verilog 文件读懂 HDMI 1080p 时序
+# 第 03 课：从一个 Verilog 文件读懂 HDMI 1080p 时序
 
 本课只重点研究一个文件：[`hdmi_timing_1080p.v`](../examples/hdmi-timing/rtl/hdmi_timing_1080p.v)。学完后应该能够回答：一个像素时钟如何变成`HS`、`VS`和`DE`，以及显示器为什么能分辨一行、一帧和有效图像。
 
