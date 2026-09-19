@@ -31,3 +31,22 @@ gtkwave hdmi_timing_small.vcd
 ```
 
 完整中文原理说明见[第02课](../../docs/02-hdmi-video-timing.md)。
+
+## Efinity综合检查
+
+安装Efinity 2026.1后，在PowerShell运行：
+
+```powershell
+./synthesize.ps1
+```
+
+脚本只执行Map，不需要创建引脚工程。Ti60F225实测结果：
+
+```text
+map : PASS
+EFX_ADD  : 22
+EFX_LUT4 : 30
+EFX_FF   : 24
+```
+
+这说明教学RTL不仅能仿真，也能被Efinity综合成实际FPGA计数器、比较器和触发器。

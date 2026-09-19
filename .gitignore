@@ -16,3 +16,5 @@ work_*/
 *.o
 *.vvp
 *.vcd
+efinity_out/
+efinity_work/

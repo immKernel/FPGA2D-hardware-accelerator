@@ -252,6 +252,17 @@ cd examples/hdmi-timing
 
 为了方便看波形，[`tb_hdmi_timing_small.sv`](../examples/hdmi-timing/sim/tb_hdmi_timing_small.sv)把参数缩小为`14×7`总时序，但使用完全相同的RTL，生成`hdmi_timing_small.vcd`。
 
+### Efinity实际综合
+
+运行：
+
+```powershell
+cd examples/hdmi-timing
+./synthesize.ps1
+```
+
+在Efinity 2026.1、Ti60F225、I3时序模型下已经验证`map : PASS`。教学模块综合结果约为30个LUT4、24个FF和22个加法/比较单元，不使用RAM或DSP。综合后看到的核心硬件正是两个12位计数器和若干边界比较器。
+
 ## 12. 最常见的时序错误
 
 1. 把总长度写成1920×1080，忘了同步和前后肩。
