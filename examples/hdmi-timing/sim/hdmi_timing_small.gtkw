@@ -1,0 +1,23 @@
+[*]
+[*] HDMI timing teaching waveform layout
+[*]
+[dumpfile] "hdmi_timing_small.vcd"
+[timestart] 0
+[size] 1200 720
+[pos] -1 -1
+*-4.000000 0 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+[sst_width] 260
+[signals_width] 210
+[sst_expanded] 1
+@28
+tb_hdmi_timing_small.pixel_clk
+tb_hdmi_timing_small.reset_n
+@22
+tb_hdmi_timing_small.pixel_x[11:0]
+tb_hdmi_timing_small.pixel_y[11:0]
+@28
+tb_hdmi_timing_small.data_enable
+tb_hdmi_timing_small.hsync
+tb_hdmi_timing_small.vsync
+[pattern_trace] 1
+[pattern_trace] 0

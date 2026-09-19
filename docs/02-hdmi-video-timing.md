@@ -289,6 +289,12 @@ cd examples/hdmi-timing
 
 为了方便看波形，[`tb_hdmi_timing_small.sv`](../examples/hdmi-timing/sim/tb_hdmi_timing_small.sv)把参数缩小为`14×7`总时序，但使用完全相同的RTL，生成`hdmi_timing_small.vcd`。
 
+仓库同时提供[`hdmi_timing_small.gtkw`](../examples/hdmi-timing/sim/hdmi_timing_small.gtkw)，打开时会自动排列时钟、复位、坐标和三个时序输出：
+
+```powershell
+gtkwave hdmi_timing_small.vcd sim/hdmi_timing_small.gtkw
+```
+
 ### Efinity实际综合
 
 运行：

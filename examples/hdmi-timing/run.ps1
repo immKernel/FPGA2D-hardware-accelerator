@@ -18,4 +18,5 @@ if ($LASTEXITCODE -ne 0) { throw "small timing testbench compilation failed" }
 vvp hdmi_timing_small.vvp
 if ($LASTEXITCODE -ne 0) { throw "small timing testbench failed" }
 
-Write-Host "Open hdmi_timing_small.vcd in GTKWave to inspect the waveform."
+Write-Host "Open the prepared waveform layout with:"
+Write-Host "gtkwave hdmi_timing_small.vcd sim/hdmi_timing_small.gtkw"

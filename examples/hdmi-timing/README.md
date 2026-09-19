@@ -45,8 +45,10 @@ PASS: same RTL verified with 1280x720 timing parameters
 `tb_hdmi_timing_small.sv`使用缩小后的`14×7`总时序生成`hdmi_timing_small.vcd`。用GTKWave打开它，可以在一页内观察完整一帧：
 
 ```powershell
-gtkwave hdmi_timing_small.vcd
+gtkwave hdmi_timing_small.vcd sim/hdmi_timing_small.gtkw
 ```
+
+布局文件会自动加入`pixel_clk`、`reset_n`、`pixel_x`、`pixel_y`、`data_enable`、`hsync`和`vsync`。
 
 完整中文原理说明见[第02课](../../docs/02-hdmi-video-timing.md)。
 
