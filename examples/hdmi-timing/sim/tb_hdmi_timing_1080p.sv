@@ -76,6 +76,22 @@ module tb_hdmi_timing_1080p;
         if (x == 0 && vsync)
           vsync_lines = vsync_lines + 1;
 
+        // Print one representative horizontal line and every vertical boundary.
+        if (y == 0 && x == 0)
+          $display("TRACE frame start:       x=%0d y=%0d DE=%0b HS=%0b VS=%0b", x, y, data_enable, hsync, vsync);
+        if (y == 0 && x == H_ACTIVE)
+          $display("TRACE horizontal active end / front porch start: x=%0d", x);
+        if (y == 0 && x == H_ACTIVE + H_FRONT)
+          $display("TRACE HS rising edge:     x=%0d", x);
+        if (y == 0 && x == H_ACTIVE + H_FRONT + H_SYNC)
+          $display("TRACE HS falling edge:    x=%0d", x);
+        if (x == 0 && y == V_ACTIVE)
+          $display("TRACE vertical active end / front porch start: y=%0d", y);
+        if (x == 0 && y == V_ACTIVE + V_FRONT)
+          $display("TRACE VS rising edge:     y=%0d", y);
+        if (x == 0 && y == V_ACTIVE + V_FRONT + V_SYNC)
+          $display("TRACE VS falling edge:    y=%0d", y);
+
         @(negedge pixel_clk);
       end
     end
@@ -89,6 +105,7 @@ module tb_hdmi_timing_1080p;
     if (pixel_x !== 0 || pixel_y !== 0)
       $fatal(1, "counters did not wrap at frame boundary");
 
+    $display("TRACE frame wrap:        x=%0d y=%0d", pixel_x, pixel_y);
     $display("PASS: one complete 1920x1080 timing frame verified");
     $display("      total periods = %0d x %0d = %0d", H_TOTAL, V_TOTAL,
              H_TOTAL * V_TOTAL);

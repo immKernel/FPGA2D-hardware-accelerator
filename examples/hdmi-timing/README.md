@@ -18,6 +18,14 @@ vvp hdmi_timing_1080p.vvp
 预期结果：
 
 ```text
+TRACE frame start:       x=0 y=0 DE=1 HS=0 VS=0
+TRACE horizontal active end / front porch start: x=1920
+TRACE HS rising edge:     x=2008
+TRACE HS falling edge:    x=2052
+TRACE vertical active end / front porch start: y=1080
+TRACE VS rising edge:     y=1084
+TRACE VS falling edge:    y=1089
+TRACE frame wrap:         x=0 y=0
 PASS: one complete 1920x1080 timing frame verified
       total periods = 2200 x 1125 = 2475000
       active pixels = 2073600
