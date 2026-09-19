@@ -30,6 +30,16 @@ PASS: one complete 1920x1080 timing frame verified
       total periods = 2200 x 1125 = 2475000
       active pixels = 2073600
       HS = 44 clocks per line, VS = 5 lines per frame
+PASS: asynchronous reset immediately clears counters and outputs
+```
+
+同一个`hdmi_timing_1080p.v`还会被第二个测试平台用标准720p参数重新例化：
+
+```text
+PASS: same RTL verified with 1280x720 timing parameters
+      total periods = 1650 x 750 = 1237500
+      active pixels = 921600
+      74.25 MHz / 1237500 = 60 Hz
 ```
 
 `tb_hdmi_timing_small.sv`使用缩小后的`14×7`总时序生成`hdmi_timing_small.vcd`。用GTKWave打开它，可以在一页内观察完整一帧：

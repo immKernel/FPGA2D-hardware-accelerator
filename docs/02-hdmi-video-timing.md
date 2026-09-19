@@ -211,6 +211,19 @@ v_count <  1080 + 4 + 5 → v_count < 1089
 
 开发板原工程使用约148.75 MHz，因此刷新率约为60.101 Hz，显示器通常仍可锁定。
 
+### 这里实际涉及哪些时钟
+
+```mermaid
+flowchart LR
+  REF[25 MHz参考时钟] --> PLL[PLL]
+  PLL -->|约148.75 MHz| PIX[像素时钟域<br/>本时序模块和TMDS编码]
+  PLL -->|约743.75 MHz| SER[半速率DDR串行器]
+  PIX -->|每通道每像素10 bit| SER
+  SER -->|约1.4875 Gbit/s| HDMI[TMDS差分通道]
+```
+
+本课这个`.v`文件只工作在像素时钟域。10位TMDS码由后级串行器用5倍像素频率、双边沿发送，因此线速率相当于像素频率的10倍。CPU/APB时钟不进入这个时序模块。
+
 ## 10. 如何连接图像源和TMDS编码器
 
 ```verilog
@@ -234,6 +247,25 @@ hdmi_timing_1080p u_timing (
 ```
 
 TMDS编码器在`DE=1`时编码RGB，在`DE=0`时编码控制符号，其中蓝色通道携带`HS/VS`控制信息。
+
+### 用相同RTL改成720p60
+
+模块把四段水平参数和四段垂直参数都做成了parameter，所以不需要复制或重写计数器：
+
+```verilog
+hdmi_timing_1080p #(
+  .H_ACTIVE(1280), .H_FRONT(110), .H_SYNC(40), .H_BACK(220),
+  .V_ACTIVE(720),  .V_FRONT(5),   .V_SYNC(5),  .V_BACK(20)
+) u_timing_720p (...);
+```
+
+```text
+H_TOTAL = 1280 + 110 + 40 + 220 = 1650
+V_TOTAL = 720 + 5 + 5 + 20 = 750
+刷新率  = 74.25 MHz / (1650 × 750) = 60 Hz
+```
+
+[`tb_hdmi_timing_720p.sv`](../examples/hdmi-timing/sim/tb_hdmi_timing_720p.sv)已用同一个RTL逐周期验证完整720p帧。参数变化时，PLL像素时钟也必须相应改为74.25 MHz。
 
 ## 11. 仿真不是“看到能跑”，而是检查每个周期
 
