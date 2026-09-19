@@ -12,6 +12,7 @@
 4. 阅读 [第 02 课：读懂 APB3 HDMI 控制模块](docs/02-apb3-hdmi-framebuffer.md)，分开理解端口、`assign`、读逻辑和写逻辑。
 5. 阅读 [第 03 课：从一个 Verilog 文件读懂 HDMI 1080p 时序](docs/03-hdmi-video-timing.md)，并运行完整帧仿真。
 6. 下载 [HDMI 时序交互讲解页](docs/hdmi-timing-explorer.html)，离线拖动坐标观察 `DE/HS/VS`。
+7. 阅读 [第 04 课：从 APB 命令到 AXI 2D 硬件加速](docs/04-apb-axi-2d-accelerator.md)，理解 CPU/FPGA 分工、移动方块示例、性能指标和高弹幕瓶颈。
 
 ![CPU 通过 APB 控制 FPGA LED 的流程图](docs/cpu-apb-led-flow.png)
 
@@ -45,6 +46,7 @@ docs/
   cpu-apb-led-flow.html        离线讲解页，可展开细节
   02-apb3-hdmi-framebuffer.md  APB3 HDMI 控制模块分段讲解
   03-hdmi-video-timing.md      HDMI横向/纵向时序与RTL逐段讲解
+  04-apb-axi-2d-accelerator.md APB控制、AXI像素搬运与高弹幕性能分析
   assets/hdmi-1080p-timing.svg 1080p时序图
   hdmi-timing-explorer.html    可离线运行的时序交互讲解页
 examples/
