@@ -13,6 +13,7 @@
 5. 阅读 [第 03 课：从一个 Verilog 文件读懂 HDMI 1080p 时序](docs/03-hdmi-video-timing.md)，并运行完整帧仿真。
 6. 下载 [HDMI 时序交互讲解页](docs/hdmi-timing-explorer.html)，离线拖动坐标观察 `DE/HS/VS`。
 7. 阅读 [第 04 课：从 APB 命令到 AXI 2D 硬件加速](docs/04-apb-axi-2d-accelerator.md)，理解 CPU/FPGA 分工、移动方块示例、性能指标和高弹幕瓶颈。
+8. 阅读 [第 05 课：从基础 FIFO 到赛题二的数据缓冲](docs/05-fifo-foundations-to-advanced.md)，运行最小 FIFO 仿真，再理解 ready/valid、Burst 容量管理和进阶 FIFO。
 
 ![CPU 通过 APB 控制 FPGA LED 的流程图](docs/cpu-apb-led-flow.png)
 
@@ -24,6 +25,7 @@
 - [x] 软件使用阻塞延迟，每约 100 ms 切换一次电平；完整亮灭周期约 200 ms。
 - [x] CPU 通过 APB0 写入 FPGA 片内 RGB565 帧缓存并控制 HDMI 有效图像。
 - [x] 独立实现并逐像素验证 1920×1080、2200×1125 HDMI/DVI 视频时序。
+- [x] 完成最小单时钟同步 FIFO，并验证顺序、空满、越界请求和同时读写。
 
 上板结果由实验者确认。当前记录证明了这一位控制通路能够工作，尚不表示多寄存器、完整 32 位传输和读回都已验证。
 
@@ -47,11 +49,13 @@ docs/
   02-apb3-hdmi-framebuffer.md  APB3 HDMI 控制模块分段讲解
   03-hdmi-video-timing.md      HDMI横向/纵向时序与RTL逐段讲解
   04-apb-axi-2d-accelerator.md APB控制、AXI像素搬运与高弹幕性能分析
+  05-fifo-foundations-to-advanced.md FIFO基础、进阶路线、时序与赛题应用
   assets/hdmi-1080p-timing.svg 1080p时序图
   hdmi-timing-explorer.html    可离线运行的时序交互讲解页
 examples/
   apb3-hdmi/apb3_top.v         可独立综合的APB3教学版Verilog
   hdmi-timing/                 时序RTL、完整帧自检和小波形仿真
+  basic-fifo/                  基础FIFO RTL、testbench与运行脚本
 ```
 
 本仓库目前收录学习资料和教学片段，不是可独立综合的完整 FPGA 工程。厂商 SoC、DDR IP、工具链和编译产物未包含在内；源文件定位以原开发板工程为准。未确认的内容会明确标注，不把计划当作已经完成的功能。
